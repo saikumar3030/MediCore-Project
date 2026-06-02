@@ -1,0 +1,931 @@
+<div class="space-y-6">
+
+  @switch (currentUser()?.role) {
+
+    <!--
+         DOCTOR DASHBOARD
+   -->
+    @case (UserRole.Doctor) {
+
+      <!-- Greeting Banner -->
+      <div class="rounded-2xl p-6 border bg-gradient-to-br from-blue-50 to-sky-50 border-blue-200 dark:from-blue-900/30 dark:to-blue-950/20 dark:border-blue-500/20">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-blue-400 text-xs font-semibold uppercase tracking-widest mb-1">Physician Portal</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, Dr. {{ currentUser()?.userName }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ today }}</p>
+          </div>
+          <span class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">Doctor</span>
+        </div>
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <a routerLink="/appointments" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ pendingAppointments().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Appts</p>
+          </a>
+          <a routerLink="/patients" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ totalPatients() }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patients</p>
+          </a>
+          <a routerLink="/lab" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-amber-400">{{ pendingLabOrders().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Lab Orders</p>
+          </a>
+          <a routerLink="/appointments" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-green-400">{{ completedAppointments().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Completed</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Pending Appointments -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Pending Appointments</h3>
+            </div>
+            <a routerLink="/appointments" class="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">View all</a>
+          </div>
+          @if (pendingAppointments().length === 0) {
+            <div class="px-5 py-10 text-center text-slate-500 dark:text-slate-500 text-sm">No pending appointments</div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (a of pendingAppointments().slice(0, 5); track a.appointmentID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/15">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ a.patient?.userName || '—' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ a.date }} · {{ a.time }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="apptStatusClass(a.status)">{{ a.status }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Pending Lab Orders + Quick Actions -->
+        <div class="space-y-5">
+          <!-- Lab Orders -->
+          <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-violet-400"></div>
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Pending Lab Orders</h3>
+              </div>
+              <a routerLink="/lab" class="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">View all</a>
+            </div>
+            @if (pendingLabOrders().length === 0) {
+              <div class="px-5 py-8 text-center text-slate-500 dark:text-slate-500 text-sm">No pending lab orders</div>
+            } @else {
+              <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                @for (t of pendingLabOrders().slice(0, 4); track t.testID) {
+                  <div class="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 dark:text-white">{{ t.type }}</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patient {{ shortId(t.patient?.userId || '') }} · {{ t.date | date:'MMM d' }}</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="labStatusClass(t.status)">{{ t.status }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="grid grid-cols-2 gap-3">
+            @for (action of [
+              {label:'My Appointments', route:'/appointments', icon:'calendar', color:'blue'},
+              {label:'Order Lab Test',   route:'/lab',         icon:'lab',       color:'violet'},
+              {label:'Pharmacy',         route:'/pharmacy',    icon:'pill',      color:'pink'}
+            ]; track action.label) {
+              <a [routerLink]="action.route" class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/5 hover:border-blue-500/30 transition-all" style="background-color: var(--surface);">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/15">
+                  <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    @if (action.icon === 'calendar') { <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/> }
+                    @if (action.icon === 'document')  { <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/> }
+                    @if (action.icon === 'lab')       { <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/> }
+                    @if (action.icon === 'pill')      { <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2h-4M9 3a2 2 0 012 2v2h2V5a2 2 0 012-2M9 3h6"/> }
+                  </svg>
+                </div>
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ action.label }}</span>
+              </a>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+
+
+    <!-- 
+         PATIENT DASHBOARD
+    -->
+    @case (UserRole.Patient) {
+
+      <!-- Greeting Banner -->
+      <div class="rounded-2xl p-6 border bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-200 dark:from-teal-900/30 dark:to-teal-950/20 dark:border-teal-500/20">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-teal-400 text-xs font-semibold uppercase tracking-widest mb-1">Patient Portal</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {{ currentUser()?.userName }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ today }}</p>
+          </div>
+          <span class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30">Patient</span>
+        </div>
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <a routerLink="/appointments" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ pendingAppointments().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Upcoming Appts</p>
+          </a>
+          <a routerLink="/billing" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-red-400">{{ unpaidBills().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Bills</p>
+          </a>
+          <a routerLink="/lab" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-teal-400">{{ labResultsReady().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Results Ready</p>
+          </a>
+          <a routerLink="/billing" class="rounded-xl p-3 text-center bg-white hover:bg-slate-50 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/8 dark:border-white/[0.07] transition-all">
+            <p class="text-xl font-bold text-green-400">₹{{ paidTotal() | number:'1.0-0' }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total Paid</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- My Appointments -->
+        <div class="rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col" style="background:rgba(255,255,255,0.04); height:340px;">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06] shrink-0">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-teal-400"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">My Appointments</h3>
+            </div>
+            <button (click)="openBooking()" class="text-xs text-teal-400 hover:text-teal-300 font-medium transition-colors flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Book new
+            </button>
+          </div>
+          @if (appointments().length === 0) {
+            <div class="flex-1 flex items-center justify-center text-center px-5">
+              <div>
+                <p class="text-slate-500 dark:text-slate-500 text-sm">No appointments yet</p>
+                <button (click)="openBooking()" class="mt-3 inline-block text-xs text-teal-400 hover:text-teal-300 font-medium">Book your first appointment →</button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (a of appointments(); track a.appointmentID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-teal-500/15">
+                    <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">Dr. {{ a.doctor?.userName || '—' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ a.date }} · {{ a.time }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="apptStatusClass(a.status)">{{ a.status }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- My Bills -->
+        <div class="rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col" style="background:rgba(255,255,255,0.04); height:340px;">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06] shrink-0">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">My Bills</h3>
+            </div>
+            <a routerLink="/billing" class="text-xs text-teal-400 hover:text-teal-300 font-medium transition-colors">View all</a>
+          </div>
+          @if (bills().length === 0) {
+            <div class="flex-1 flex items-center justify-center text-center px-5">
+              <p class="text-slate-500 dark:text-slate-500 text-sm">No billing records</p>
+            </div>
+          } @else {
+            <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (b of bills(); track b.billID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ b.description || 'Medical Bill' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ b.date | date:'MMM d, y' }}</p>
+                  </div>
+                  <div class="text-right shrink-0 mr-3">
+                    <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ b.amount | currency:'INR':'symbol':'1.0-0' }}</p>
+                    <p class="text-xs text-slate-500">paid {{ b.paidAmount | currency:'INR':'symbol':'1.0-0' }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="billStatusClass(b.status)">{{ b.status }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- Available Doctors -->
+      <div class="rounded-2xl border border-white/[0.07] overflow-hidden flex flex-col" style="background:rgba(255,255,255,0.04); height:300px;">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06] shrink-0">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Available Doctors</h3>
+          </div>
+          <button (click)="openBooking()" class="text-xs text-teal-400 hover:text-teal-300 font-medium transition-colors flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Book appointment
+          </button>
+        </div>
+        @if (doctors().length === 0) {
+          <div class="flex-1 flex items-center justify-center">
+            <p class="text-slate-500 dark:text-slate-500 text-sm">No doctors available at the moment</p>
+          </div>
+        } @else {
+          <div class="flex-1 min-h-0 overflow-y-auto p-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              @for (doc of doctors(); track doc.userId) {
+                <button (click)="selectedDoctorId.set(doc.userId); openBooking()"
+                        class="flex items-center gap-3 p-4 rounded-xl border border-white/[0.07] hover:bg-teal-500/5 hover:border-teal-500/25 transition-all text-left"
+                        style="background-color: var(--surface);">
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-blue-500/15 border border-blue-500/20">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">Dr. {{ doc.userName }}</p>
+                    <p class="text-xs text-teal-400 mt-0.5">Book appointment →</p>
+                  </div>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Identity Documents (quick upload) -->
+      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-brand-500"></div>
+            <h3 class="text-sm font-semibold text-slate-900">Identity Documents</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ patientDocs().length }}</span>
+          </div>
+          <a routerLink="/profile" class="text-xs font-medium text-brand-700 hover:text-brand-800 transition">Manage all →</a>
+        </div>
+
+        <!-- Upload form -->
+        <div class="px-5 py-4 bg-slate-50/60 border-b border-slate-100">
+          <div class="flex flex-wrap gap-2 mb-3">
+            @for (opt of docTypeOptions; track opt.value) {
+              <button type="button"
+                      (click)="setUploadDocType(opt.value)"
+                      class="px-3 py-1 rounded-full text-xs font-medium ring-1 transition-all"
+                      [class]="uploadDocType() === opt.value
+                        ? 'bg-brand-600 text-white ring-brand-600 shadow-sm'
+                        : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50 hover:ring-slate-300'">
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <label for="dashboard-doc-file"
+                   class="flex-1 cursor-pointer flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 border-dashed border-slate-300 bg-white hover:border-brand-400 hover:bg-brand-50/40 transition-colors">
+              <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/>
+              </svg>
+              <span class="min-w-0 flex-1 text-xs">
+                @if (pendingDocFile()) {
+                  <span class="block text-sm font-medium text-slate-900 truncate">{{ pendingDocFile()!.name }}</span>
+                  <span class="text-slate-500">{{ (pendingDocFile()!.size / 1024) | number:'1.0-0' }} KB</span>
+                } @else {
+                  <span class="block text-sm font-medium text-slate-700">Choose a file</span>
+                  <span class="text-slate-500">PDF or image · 10 MB max</span>
+                }
+              </span>
+              <input id="dashboard-doc-file"
+                     type="file"
+                     class="sr-only"
+                     accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+                     (change)="onDocFileSelected($event)"/>
+            </label>
+            <button type="button"
+                    (click)="uploadPatientDocument()"
+                    [disabled]="uploadDocLoading() || !pendingDocFile()"
+                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+              @if (uploadDocLoading()) {
+                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Uploading
+              } @else {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+                Upload
+              }
+            </button>
+          </div>
+
+          @if (uploadDocError()) {
+            <p class="mt-2 text-xs text-red-600">{{ uploadDocError() }}</p>
+          }
+          @if (uploadDocSuccess()) {
+            <p class="mt-2 text-xs text-emerald-700 font-medium">✓ Document uploaded</p>
+          }
+        </div>
+
+        @if (patientDocs().length === 0) {
+          <div class="px-5 py-6 text-center text-slate-500 text-sm">
+            <p>No documents on file. Upload your ID, Aadhaar, passport, or insurance card above.</p>
+          </div>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (doc of patientDocs().slice(0, 4); track doc.documentId) {
+              <li class="flex items-center gap-3 px-5 py-2.5">
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-semibold shrink-0">{{ docTypeLabel(doc.docType) }}</span>
+                <span class="text-sm text-slate-700 truncate flex-1">{{ doc.fileName }}</span>
+                <a [href]="doc.fileUri" target="_blank" rel="noopener"
+                   class="text-xs font-semibold text-brand-700 hover:text-brand-800 transition shrink-0">View</a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <!-- Book Appointment — opens modal -->
+        <button (click)="openBooking()" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-teal-500/25 hover:bg-teal-500/8 hover:border-teal-500/40 transition-all text-center" style="background:rgba(20,184,166,0.06);">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-teal-500/15">
+            <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-medium text-teal-300">Book Appointment</span>
+        </button>
+        <!-- Other actions -->
+        @for (action of [
+          {label:'Medical Records', route:'/emr',     icon:'document'},
+          {label:'Lab Results',     route:'/lab',     icon:'lab'},
+          {label:'Pay Bills',       route:'/billing', icon:'billing'}
+        ]; track action.label) {
+          <a [routerLink]="action.route" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/[0.07] hover:bg-teal-500/5 hover:border-teal-500/25 transition-all text-center" style="background-color: var(--surface);">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-teal-500/15">
+              <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                @if (action.icon === 'document') { <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/> }
+                @if (action.icon === 'lab')      { <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/> }
+                @if (action.icon === 'billing')  { <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/> }
+              </svg>
+            </div>
+            <span class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ action.label }}</span>
+          </a>
+        }
+      </div>
+
+    <!-- 
+         BOOK APPOINTMENT MODAL (Patient) — light card
+     -->
+    @if (showBooking()) {
+      <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto bg-slate-900/40 backdrop-blur-sm">
+        <div class="relative z-10 w-full sm:max-w-md my-0 sm:my-auto">
+
+          <!-- ── Success state ── -->
+          @if (bookingSuccess()) {
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl p-8 sm:p-10 text-center shadow-2xl ring-1 ring-slate-900/5 border border-slate-200">
+              <div class="relative w-16 h-16 mx-auto mb-4">
+                <div class="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping"></div>
+                <div class="relative w-16 h-16 rounded-full flex items-center justify-center bg-emerald-50 border-2 border-emerald-400">
+                  <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+              </div>
+              <h2 class="text-lg font-bold text-slate-900 mb-1">Appointment Booked</h2>
+              <p class="text-slate-500 text-sm">Your appointment has been confirmed.</p>
+              <div class="mt-5 flex justify-center">
+                <div class="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+
+          } @else {
+
+            <!-- ── Form card ── -->
+            <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl ring-1 ring-slate-900/5 border border-slate-200 overflow-hidden max-h-[92vh] sm:max-h-[88vh] flex flex-col">
+
+              <!-- Header -->
+              <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-brand-50 text-brand-700 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-slate-900 truncate">Book Appointment</h2>
+                    <p class="text-xs text-slate-500 truncate">Doctor → date → slot</p>
+                  </div>
+                </div>
+                <button (click)="closeBooking()" aria-label="Close"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Body -->
+              <div class="px-5 sm:px-6 py-5 space-y-5 overflow-y-auto flex-1">
+
+                @if (bookingError()) {
+                  <div class="flex items-start gap-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700">
+                    <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm">{{ bookingError() }}</p>
+                  </div>
+                }
+
+                <!-- Doctor -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Select Doctor</label>
+                  <select [ngModel]="selectedDoctorId()"
+                          (ngModelChange)="selectedDoctorId.set($event); onDoctorOrDateChange()"
+                          class="input-field appearance-none cursor-pointer">
+                    <option value="">-- Choose a doctor --</option>
+                    @for (doc of doctors(); track doc.userId) {
+                      <option [value]="doc.userId">Dr. {{ doc.userName }}</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Date -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Select Date</label>
+                  <input type="date"
+                         [min]="todayISO"
+                         [ngModel]="selectedDate()"
+                         (ngModelChange)="selectedDate.set($event); onDoctorOrDateChange()"
+                         class="input-field">
+                </div>
+
+                <!-- Available Slots -->
+                @if (selectedDoctorId() && selectedDate()) {
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Available Time Slots</label>
+                    @if (bookingSlotsLoading()) {
+                      <div class="flex items-center gap-2 text-sm text-slate-500">
+                        <div class="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        Fetching available slots…
+                      </div>
+                    } @else if (availableSlots().length === 0) {
+                      <div class="rounded-lg p-4 text-center border border-slate-200 bg-slate-50">
+                        <p class="text-slate-700 text-sm font-medium">No available slots for this date.</p>
+                        <p class="text-slate-500 text-xs mt-0.5">Try a different date or doctor.</p>
+                      </div>
+                    } @else {
+                      <div class="grid grid-cols-3 gap-2">
+                        @for (slot of availableSlots(); track slot.scheduleID) {
+                          <button type="button"
+                                  (click)="selectedSlotId.set(slot.scheduleID)"
+                                  class="py-2.5 px-2 rounded-lg text-sm font-medium border transition-all"
+                                  [class]="selectedSlotId() === slot.scheduleID
+                                    ? 'bg-brand-600 border-brand-600 text-white shadow-sm'
+                                    : 'bg-white border-slate-200 text-slate-700 hover:border-brand-400 hover:text-brand-700 hover:bg-brand-50'">
+                            {{ slot.timeSlot }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Notes -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Notes <span class="text-slate-400 text-xs font-normal">(optional)</span>
+                  </label>
+                  <textarea rows="2"
+                            placeholder="Reason for visit or any additional notes…"
+                            [ngModel]="bookingNotes()"
+                            (ngModelChange)="bookingNotes.set($event)"
+                            class="input-field resize-none"></textarea>
+                </div>
+              </div>
+
+              <!-- Footer actions -->
+              <div class="flex gap-3 px-5 sm:px-6 py-4 border-t border-slate-100 bg-slate-50/60 shrink-0">
+                <button type="button" (click)="closeBooking()"
+                        class="btn-secondary flex-1">Cancel</button>
+                <button type="button" (click)="bookAppointment()"
+                        [disabled]="bookingLoading() || !selectedSlotId()"
+                        class="btn-primary flex-[2] inline-flex items-center justify-center gap-2">
+                  @if (bookingLoading()) {
+                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Booking…
+                  } @else {
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Confirm Booking
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    }
+
+
+    <!-- LAB TECHNICIAN DASHBOARD -->
+    @case (UserRole.Lab_Technician) {
+
+      <!-- Greeting Banner -->
+      <div class="rounded-2xl p-6 border bg-gradient-to-br from-violet-50 to-purple-50 border-violet-200 dark:from-violet-900/30 dark:to-violet-950/20 dark:border-violet-500/20">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-violet-400 text-xs font-semibold uppercase tracking-widest mb-1">Laboratory</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {{ currentUser()?.userName }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ today }}</p>
+          </div>
+          <span class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-violet-500/20 text-violet-300 border border-violet-500/30">Lab Technician</span>
+        </div>
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-amber-400">{{ pendingTests().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Tests</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-blue-400">{{ inProgressTests().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">In Progress</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-green-400">{{ completedTests().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Completed</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ labTests().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total Tests</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Pending Tests Queue -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Pending Test Queue</h3>
+            </div>
+            <a routerLink="/lab" class="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">View all</a>
+          </div>
+          @if (pendingTests().length === 0) {
+            <div class="px-5 py-10 text-center text-slate-500 dark:text-slate-500 text-sm">No pending tests — queue is clear</div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (t of pendingTests().slice(0, 5); track t.testID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-violet-500/15">
+                    <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ t.type }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patient {{ shortId(t.patient?.userId || '') }} · {{ t.date | date:'MMM d' }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="labStatusClass(t.status)">{{ t.status }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Assigned + Completed -->
+        <div class="space-y-5">
+          <!-- Assigned to me -->
+          <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Assigned to Me</h3>
+              </div>
+              <a routerLink="/lab" class="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors">View all</a>
+            </div>
+            @if (inProgressTests().length === 0) {
+              <div class="px-5 py-6 text-center text-slate-500 dark:text-slate-500 text-sm">No tests assigned</div>
+            } @else {
+              <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+                @for (t of inProgressTests().slice(0, 3); track t.testID) {
+                  <div class="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 dark:text-white">{{ t.type }}</p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">Patient {{ shortId(t.patient?.userId || '') }} · {{ t.date | date:'MMM d' }}</p>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="labStatusClass(t.status)">{{ t.status }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="grid grid-cols-2 gap-3">
+            <a routerLink="/lab" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/[0.07] hover:bg-violet-500/5 hover:border-violet-500/25 transition-all text-center" style="background-color: var(--surface);">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-violet-500/15">
+                <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-700 dark:text-slate-300">All Lab Tests</span>
+            </a>
+            <a routerLink="/lab" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-white/[0.07] hover:bg-violet-500/5 hover:border-violet-500/25 transition-all text-center" style="background-color: var(--surface);">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-green-500/15">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Upload Report</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    }
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         PHARMACIST DASHBOARD
+    ══════════════════════════════════════════════════════════════ -->
+    @case (UserRole.Pharmacist) {
+
+      <!-- Greeting Banner -->
+      <div class="rounded-2xl p-6 border bg-gradient-to-br from-pink-50 to-rose-50 border-pink-200 dark:from-pink-900/30 dark:to-pink-950/20 dark:border-pink-500/20">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-pink-400 text-xs font-semibold uppercase tracking-widest mb-1">Pharmacy</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {{ currentUser()?.userName }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ today }}</p>
+          </div>
+          <span class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-pink-500/20 text-pink-300 border border-pink-500/30">Pharmacist</span>
+        </div>
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-amber-400">{{ issuedPrescriptions().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Dispenses</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-green-400">{{ dispensedItems().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Dispensed</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-red-400">{{ lowStock().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Low Stock</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ activeMedicines().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Active Medicines</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Pending Dispenses -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Pending Dispenses</h3>
+            </div>
+            <a routerLink="/pharmacy" class="text-xs text-pink-400 hover:text-pink-300 font-medium transition-colors">View all</a>
+          </div>
+          @if (issuedPrescriptions().length === 0) {
+            <div class="px-5 py-10 text-center text-slate-500 dark:text-slate-500 text-sm">No pending dispenses</div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (p of issuedPrescriptions().slice(0, 5); track p.prescriptionID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-pink-500/15">
+                    <svg class="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM12 8v8m-4-4h8"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ p.patientName || 'Unknown patient' }}</p>
+                    <p class="text-[10px] font-mono text-slate-500 dark:text-slate-500 truncate">{{ p.patientID || '—' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ p.medicine }} · {{ p.dosage }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 bg-amber-500/15 text-amber-400">Issued</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Low Stock Alerts -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Low Stock Alerts</h3>
+            </div>
+            <a routerLink="/pharmacy" class="text-xs text-pink-400 hover:text-pink-300 font-medium transition-colors">Manage inventory</a>
+          </div>
+          @if (lowStock().length === 0) {
+            <div class="px-5 py-10 text-center">
+              <p class="text-green-400 text-sm font-medium">All stock levels normal</p>
+              <p class="text-slate-500 text-xs mt-1">No medicines below threshold</p>
+            </div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (m of lowStock().slice(0, 5); track m.medicineID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ m.name }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ m.type }} · Expires {{ m.expiryDate | date:'MMM y' }}</p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="text-sm font-bold text-red-400">{{ m.stock }} left</p>
+                    <p class="text-xs text-slate-500">reorder needed</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <!-- All Medicines quick view -->
+          @if (activeMedicines().length > 0 && lowStock().length === 0) {
+            <div class="px-5 pb-4">
+              <div class="rounded-xl p-3 bg-green-500/5 border border-green-500/15 text-center">
+                <p class="text-xs text-green-400">{{ activeMedicines().length }} active medicines in inventory</p>
+              </div>
+            </div>
+          }
+        </div>
+
+      </div>
+    }
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FINANCE OFFICER DASHBOARD
+    ══════════════════════════════════════════════════════════════ -->
+    @case (UserRole.Finance_Officer) {
+
+      <!-- Greeting Banner -->
+      <div class="rounded-2xl p-6 border bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 dark:from-amber-900/30 dark:to-amber-950/20 dark:border-amber-500/20">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-amber-400 text-xs font-semibold uppercase tracking-widest mb-1">Finance & Billing</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {{ currentUser()?.userName }}</h1>
+            <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">{{ today }}</p>
+          </div>
+          <span class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">Finance Officer</span>
+        </div>
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-green-400">₹{{ totalRevenue() | number:'1.0-0' }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total Revenue</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-amber-400">{{ pendingBillList().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Pending Bills</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-red-400">{{ overdueBills().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Overdue</p>
+          </div>
+          <div class="rounded-xl p-3 text-center bg-white/5 border border-white/[0.07]">
+            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ bills().length }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total Bills</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Recent Bills -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Recent Bills</h3>
+            </div>
+            <a routerLink="/billing" class="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">View all</a>
+          </div>
+          @if (bills().length === 0) {
+            <div class="px-5 py-10 text-center text-slate-500 dark:text-slate-500 text-sm">No billing records found</div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (b of recentBills(); track b.billID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ b.description || 'Medical Bill' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patient {{ shortId(b.patientID) }} · {{ b.date | date:'MMM d, y' }}</p>
+                  </div>
+                  <div class="text-right shrink-0 mr-3">
+                    <p class="text-sm font-semibold text-slate-900 dark:text-white">₹{{ b.amount | number:'1.0-0' }}</p>
+                    <p class="text-xs text-slate-500">paid ₹{{ b.paidAmount | number:'1.0-0' }}</p>
+                  </div>
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" [class]="billStatusClass(b.status)">{{ b.status }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Overdue Bills -->
+        <div class="rounded-2xl border overflow-hidden bg-white border-slate-200 dark:bg-white/[0.04] dark:border-white/[0.07]">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/[0.06]">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></div>
+              <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Overdue Bills</h3>
+            </div>
+            <a routerLink="/billing" class="text-xs text-amber-400 hover:text-amber-300 font-medium transition-colors">Reconcile</a>
+          </div>
+          @if (overdueBills().length === 0) {
+            <div class="px-5 py-10 text-center">
+              <p class="text-green-400 text-sm font-medium">No overdue bills</p>
+              <p class="text-slate-500 text-xs mt-1">All accounts are in good standing</p>
+            </div>
+          } @else {
+            <div class="divide-y divide-slate-100 dark:divide-white/[0.05]">
+              @for (b of overdueBills().slice(0, 5); track b.billID) {
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-red-500/15">
+                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ b.description || 'Medical Bill' }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patient {{ shortId(b.patientID) }} · Due {{ b.date | date:'MMM d' }}</p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="text-sm font-bold text-red-400">₹{{ b.amount - b.paidAmount | number:'1.0-0' }}</p>
+                    <p class="text-xs text-slate-500">outstanding</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <!-- Quick summary -->
+          <div class="px-5 py-3 border-t border-white/[0.06]">
+            <div class="grid grid-cols-2 gap-3">
+              <a routerLink="/billing" class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/5 transition-all" style="background-color: var(--surface);">
+                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/>
+                </svg>
+                <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">Insurance Claims</span>
+              </a>
+              <a routerLink="/billing" class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/5 transition-all" style="background-color: var(--surface);">
+                <svg class="w-4 h-4 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span class="text-xs text-slate-700 dark:text-slate-300 font-medium">Revenue Report</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         FALLBACK (should not appear — Admin goes to /admin)
+    ══════════════════════════════════════════════════════════════ -->
+    @default {
+      <div class="rounded-2xl p-8 text-center border border-white/[0.07]" style="background:rgba(255,255,255,0.04);">
+        <p class="text-slate-400 text-sm">Dashboard is not configured for your role. Contact your administrator.</p>
+      </div>
+    }
+
+  }
+
+</div>

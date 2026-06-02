@@ -1,0 +1,172 @@
+<div class="space-y-6">
+
+  <!-- Page header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Schedule</h1>
+      <p class="text-sm mt-1 text-slate-600 dark:text-slate-400">Add your availability slots for patients to book</p>
+    </div>
+    @if (selectedTimes().length > 0) {
+      <span class="self-start sm:self-auto px-3 py-1.5 rounded-full text-sm font-semibold border
+                   bg-emerald-50 text-emerald-700 border-emerald-200
+                   dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/40">
+        {{ selectedTimes().length }} slot{{ selectedTimes().length !== 1 ? 's' : '' }} selected
+      </span>
+    }
+  </div>
+
+  <!-- Form card -->
+  <div class="rounded-2xl border overflow-hidden
+              bg-emerald-50/40 border-emerald-200
+              dark:bg-emerald-500/[0.04] dark:border-emerald-500/20">
+
+    <div class="flex items-center gap-3 px-6 py-5 border-b border-emerald-200 dark:border-emerald-500/15">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border
+                  bg-emerald-100 border-emerald-300
+                  dark:bg-emerald-500/15 dark:border-emerald-500/30">
+        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Add Availability Slots</h2>
+        <p class="text-xs text-slate-500">Select a date then pick one or more time slots</p>
+      </div>
+    </div>
+
+    <form (ngSubmit)="createSchedule()" class="p-6 space-y-6">
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider mb-2 text-emerald-700 dark:text-emerald-400">Date</label>
+        <div class="relative inline-block">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-emerald-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <input type="date" [min]="todayISO"
+                 [ngModel]="scheduleDate()"
+                 (ngModelChange)="onDateChange($event)"
+                 name="scheduleDate"
+                 class="pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition border
+                        bg-white text-slate-900 border-slate-300
+                        focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15
+                        dark:bg-slate-800 dark:text-white dark:border-slate-700
+                        dark:focus:border-emerald-400 dark:focus:ring-emerald-400/15"/>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <label class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            Time Slots &mdash; Full Day
+          </label>
+          @if (selectedTimes().length > 0) {
+            <button type="button" (click)="clearSlots()"
+                    class="text-xs underline underline-offset-2 transition
+                           text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
+              Clear all
+            </button>
+          }
+        </div>
+
+        <p class="text-xs text-slate-500 mb-2">Morning</p>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-5">
+          @for (slot of timeSlots.slice(0, 10); track slot) {
+            <button type="button" (click)="toggleSlot(slot)"
+                    [disabled]="isSlotDisabled(slot)"
+                    [title]="isSlotAlreadyCreated(slot) ? 'You have already created this slot' : (isSlotInPast(slot) ? 'Time has already passed' : '')"
+                    class="py-2.5 rounded-xl text-xs font-medium border transition-all text-center disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through"
+                    [class]="isSlotSelected(slot)
+                      ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm shadow-emerald-500/30 dark:bg-emerald-500/25 dark:border-emerald-400/60 dark:text-emerald-200'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-700 dark:bg-white/[0.04] dark:border-white/10 dark:text-slate-400 dark:hover:border-emerald-400/35 dark:hover:text-emerald-300'">
+              {{ formatSlot(slot) }}
+            </button>
+          }
+        </div>
+
+        <p class="text-xs text-slate-500 mb-2">Afternoon</p>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 mb-5">
+          @for (slot of timeSlots.slice(10, 20); track slot) {
+            <button type="button" (click)="toggleSlot(slot)"
+                    [disabled]="isSlotDisabled(slot)"
+                    [title]="isSlotAlreadyCreated(slot) ? 'You have already created this slot' : (isSlotInPast(slot) ? 'Time has already passed' : '')"
+                    class="py-2.5 rounded-xl text-xs font-medium border transition-all text-center disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through"
+                    [class]="isSlotSelected(slot)
+                      ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm shadow-emerald-500/30 dark:bg-emerald-500/25 dark:border-emerald-400/60 dark:text-emerald-200'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-700 dark:bg-white/[0.04] dark:border-white/10 dark:text-slate-400 dark:hover:border-emerald-400/35 dark:hover:text-emerald-300'">
+              {{ formatSlot(slot) }}
+            </button>
+          }
+        </div>
+
+        <p class="text-xs text-slate-500 mb-2">Evening</p>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+          @for (slot of timeSlots.slice(20); track slot) {
+            <button type="button" (click)="toggleSlot(slot)"
+                    [disabled]="isSlotDisabled(slot)"
+                    [title]="isSlotAlreadyCreated(slot) ? 'You have already created this slot' : (isSlotInPast(slot) ? 'Time has already passed' : '')"
+                    class="py-2.5 rounded-xl text-xs font-medium border transition-all text-center disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through"
+                    [class]="isSlotSelected(slot)
+                      ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm shadow-emerald-500/30 dark:bg-emerald-500/25 dark:border-emerald-400/60 dark:text-emerald-200'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-400 hover:text-emerald-700 dark:bg-white/[0.04] dark:border-white/10 dark:text-slate-400 dark:hover:border-emerald-400/35 dark:hover:text-emerald-300'">
+              {{ formatSlot(slot) }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 pt-2 border-t border-slate-200 dark:border-white/[0.06]">
+        <button type="submit"
+                [disabled]="formLoading() || !scheduleDate() || selectedTimes().length === 0"
+                class="inline-flex items-center gap-2 py-2.5 px-7 rounded-xl font-semibold text-sm text-white
+                       disabled:opacity-40 disabled:cursor-not-allowed transition shadow-lg shadow-emerald-500/30
+                       bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400">
+          @if (formLoading()) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Saving…
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Save {{ selectedTimes().length > 0 ? selectedTimes().length + ' Slot' + (selectedTimes().length > 1 ? 's' : '') : 'Slots' }}
+          }
+        </button>
+        @if (!scheduleDate() || selectedTimes().length === 0) {
+          <p class="text-xs text-slate-500">
+            @if (!scheduleDate() && selectedTimes().length === 0) { Pick a date and at least one time slot }
+            @else if (!scheduleDate()) { Pick a date }
+            @else { Select at least one time slot }
+          </p>
+        }
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+
+@if (success()) {
+  <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-sm font-medium
+              bg-emerald-50 border-emerald-200 text-emerald-700
+              dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-300">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    {{ success() }}
+  </div>
+}
+@if (error()) {
+  <div class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-sm font-medium
+              bg-rose-50 border-rose-200 text-rose-700
+              dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-300">
+    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+    </svg>
+    {{ error() }}
+  </div>
+}

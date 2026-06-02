@@ -1,0 +1,12 @@
+<svg width="100%" viewBox="0 0 680 320" role="img" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(160, 160)">
+    <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="#0ea5e9" opacity="0.12"/>
+    <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="none" stroke="#0ea5e9" stroke-width="2"/>
+    <polygon points="0,-50 43,-25 43,25 0,50 -43,25 -43,-25" fill="none" stroke="#0ea5e9" stroke-width="0.8" opacity="0.4"/>
+    <rect x="-6" y="-22" width="12" height="44" rx="3" fill="#0ea5e9"/>
+    <rect x="-22" y="-6" width="44" height="12" rx="3" fill="#0ea5e9"/>
+    <circle cx="0" cy="0" r="4" fill="#fff" opacity="0.9"/>
+  </g>
+  <text x="240" y="148" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="62" font-weight="600" fill="#faf9f5">Medi<tspan font-weight="400" fill="#c2c0b6">Core</tspan></text>
+  <text x="242" y="182" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="400" fill="#c2c0b6" letter-spacing="3">HEALTHCARE PLATFORM</text>
+</svg>

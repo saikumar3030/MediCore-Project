@@ -1,0 +1,169 @@
+<div class="min-h-screen relative flex items-center justify-center p-4 overflow-hidden"
+     style="background-color: var(--bg-page);">
+
+  <!-- Soft brand-tinted ambient gradient -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full blur-3xl opacity-60 bg-brand-200 dark:bg-brand-500/10"></div>
+    <div class="absolute -bottom-40 -left-40 w-[480px] h-[480px] rounded-full blur-3xl opacity-50 bg-sky-200 dark:bg-sky-500/10"></div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-md">
+
+    <!-- Logo -->
+    <div class="text-center mb-7">
+      <svg viewBox="88 88 450 148" xmlns="http://www.w3.org/2000/svg" class="h-16 sm:h-20 w-auto mx-auto mb-3" aria-label="MediCore">
+        <g transform="translate(160, 160)">
+          <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="#059669" opacity="0.12"/>
+          <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="none" stroke="#059669" stroke-width="2"/>
+          <polygon points="0,-50 43,-25 43,25 0,50 -43,25 -43,-25" fill="none" stroke="#059669" stroke-width="0.8" opacity="0.4"/>
+          <rect x="-6" y="-22" width="12" height="44" rx="3" fill="#059669"/>
+          <rect x="-22" y="-6" width="44" height="12" rx="3" fill="#059669"/>
+          <circle cx="0" cy="0" r="4" fill="#fff" opacity="0.95"/>
+        </g>
+        <text x="240" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="62" font-weight="600" fill="currentColor" class="text-slate-900 dark:text-slate-100">Medi<tspan font-weight="400" fill="currentColor" class="text-slate-500">Core</tspan></text>
+        <text x="242" y="182" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="16" font-weight="400" fill="currentColor" class="text-slate-500" letter-spacing="3">HEALTHCARE PLATFORM</text>
+      </svg>
+      <p class="text-xs sm:text-sm font-medium tracking-wide uppercase text-brand-700 dark:text-brand-400">Healthcare Management System</p>
+    </div>
+
+    <!-- Card -->
+    <div class="rounded-2xl p-6 sm:p-8 border shadow-xl
+                bg-white border-slate-200
+                dark:bg-slate-900 dark:border-slate-800">
+
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-slate-900 dark:text-slate-100">Welcome back</h2>
+        <p class="text-sm mt-1 text-slate-500 dark:text-slate-400">Sign in to access your dashboard</p>
+      </div>
+
+      @if (error()) {
+        <div class="mb-5 flex items-start gap-3 p-3.5 rounded-xl border
+                    bg-rose-50 border-rose-200 text-rose-700
+                    dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-300">
+          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm">{{ error() }}</p>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Email Address</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <input
+              formControlName="email"
+              type="email"
+              placeholder="you@medicore.com"
+              class="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all border
+                     bg-white text-slate-900 placeholder-slate-400 border-slate-300
+                     focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10
+                     dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:border-slate-700
+                     dark:focus:border-brand-400 dark:focus:ring-brand-400/10"
+              [class.!border-rose-500]="form.get('email')?.invalid && form.get('email')?.touched">
+          </div>
+          @if (form.get('email')?.invalid && form.get('email')?.touched) {
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Enter a valid email address
+            </p>
+          }
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium mb-1.5 text-slate-700 dark:text-slate-300">Password</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+            </div>
+            <input
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              placeholder="••••••••"
+              class="w-full pl-10 pr-11 py-3 rounded-xl text-sm outline-none transition-all border
+                     bg-white text-slate-900 placeholder-slate-400 border-slate-300
+                     focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10
+                     dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 dark:border-slate-700
+                     dark:focus:border-brand-400 dark:focus:ring-brand-400/10"
+              [class.!border-rose-500]="form.get('password')?.invalid && form.get('password')?.touched">
+            <button type="button" (click)="togglePassword()"
+                    class="absolute inset-y-0 right-0 pr-3.5 flex items-center transition-colors
+                           text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300">
+              @if (showPassword()) {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                </svg>
+              } @else {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              }
+            </button>
+          </div>
+          @if (form.get('password')?.invalid && form.get('password')?.touched) {
+            <p class="text-rose-600 dark:text-rose-400 text-xs mt-1.5 flex items-center gap-1">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              Password must be at least 6 characters
+            </p>
+          }
+        </div>
+
+        <!-- Submit button -->
+        <button
+          type="submit"
+          [disabled]="loading()"
+          class="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white transition-all
+                 disabled:opacity-60 disabled:cursor-not-allowed
+                 flex items-center justify-center gap-2 mt-2 shadow-lg shadow-brand-500/30
+                 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400">
+          @if (loading()) {
+            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Signing in...
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+            </svg>
+            Sign In
+          }
+        </button>
+      </form>
+
+      <div class="flex items-center gap-3 my-5">
+        <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+        <span class="text-xs font-medium text-slate-400 dark:text-slate-500">OR</span>
+        <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+      </div>
+
+      <p class="text-center text-sm text-slate-500 dark:text-slate-400">
+        Don't have an account?
+        <a routerLink="/register"
+           class="font-semibold ml-1 transition-colors text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300">
+          Create account
+        </a>
+      </p>
+    </div>
+
+    <p class="text-center text-xs mt-5 text-slate-400 dark:text-slate-500">
+      Secure healthcare platform · MediCore © 2026
+    </p>
+  </div>
+
+</div>

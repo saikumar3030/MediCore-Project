@@ -1,0 +1,105 @@
+<!-- Mobile-only navigation drawer. Hidden completely on lg+ (navbar takes over). -->
+<aside
+  class="lg:hidden fixed inset-y-0 left-0 z-50 w-72 h-screen flex flex-col shrink-0 border-r transition-transform duration-200 ease-out"
+  [class.-translate-x-full]="!ui.mobileSidebarOpen()"
+  [class.translate-x-0]="ui.mobileSidebarOpen()"
+  style="background-color: var(--surface); border-color: var(--border);">
+
+  <!-- Logo + close -->
+  <div class="px-5 py-4 border-b flex items-center justify-between" style="border-color: var(--border);">
+    <svg viewBox="88 88 450 148" xmlns="http://www.w3.org/2000/svg" class="h-9 w-auto" aria-label="MediCore">
+      <g transform="translate(160, 160)">
+        <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="currentColor" opacity="0.12" class="text-brand-600"/>
+        <polygon points="0,-62 54,-31 54,31 0,62 -54,31 -54,-31" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-600"/>
+        <rect x="-6" y="-22" width="12" height="44" rx="3" fill="currentColor" class="text-brand-600"/>
+        <rect x="-22" y="-6" width="44" height="12" rx="3" fill="currentColor" class="text-brand-600"/>
+        <circle cx="0" cy="0" r="4" fill="white" opacity="0.95"/>
+      </g>
+      <text x="240" y="148" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="62" font-weight="600" fill="currentColor" class="text-slate-900">Medi<tspan font-weight="400" fill="currentColor" class="text-slate-500">Core</tspan></text>
+    </svg>
+
+    <button (click)="ui.closeSidebar()"
+            aria-label="Close menu"
+            class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-slate-100 transition">
+      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 px-3 py-5 overflow-y-auto space-y-5">
+
+    <!-- MAIN -->
+    <div class="space-y-0.5">
+      <p class="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2 text-slate-400">Main</p>
+      @for (item of mainItems(); track item.route + item.label) {
+        <a [routerLink]="item.route"
+           [queryParams]="item.queryParams ?? {}"
+           (click)="ui.closeSidebar()"
+           routerLinkActive="!text-brand-700 !bg-brand-50"
+           [routerLinkActiveOptions]="{ exact: !!item.exact, queryParams: 'exact' }"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                  text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath"/>
+          </svg>
+          <span class="flex-1 truncate">{{ item.label }}</span>
+          @if (item.badge) {
+            <span class="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">{{ item.badge }}</span>
+          }
+        </a>
+      }
+    </div>
+
+    <!-- OVERSIGHT -->
+    @if (oversightItems().length > 0) {
+      <div class="space-y-0.5">
+        <p class="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2 text-slate-400">Oversight</p>
+        @for (item of oversightItems(); track item.route + item.label) {
+          <a [routerLink]="item.route"
+             (click)="ui.closeSidebar()"
+             routerLinkActive="!text-brand-700 !bg-brand-50"
+             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                    text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath"/>
+            </svg>
+            <span class="flex-1 truncate">{{ item.label }}</span>
+            @if (item.badge) {
+              <span class="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">{{ item.badge }}</span>
+            }
+          </a>
+        }
+      </div>
+    }
+
+  </nav>
+
+  <!-- User footer -->
+  @if (currentUser()) {
+    <div class="border-t shrink-0 p-3" style="border-color: var(--border);">
+      <a routerLink="/profile"
+         (click)="ui.closeSidebar()"
+         class="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-all hover:bg-slate-100">
+        <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-brand-600">
+          <span class="text-xs font-bold text-white">{{ userInitials() }}</span>
+        </div>
+        <div class="min-w-0 flex-1 text-left">
+          <p class="text-sm font-semibold truncate text-slate-900">{{ currentUser()!.userName }}</p>
+          <p class="text-xs truncate text-slate-500">{{ currentUser()!.role }}</p>
+        </div>
+      </a>
+
+      <button (click)="logout()"
+              class="w-full mt-1 flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors
+                     text-rose-600 hover:bg-rose-50">
+        <svg class="w-4 h-4 ml-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
+        </svg>
+        <span class="text-sm font-medium">Sign Out</span>
+      </button>
+    </div>
+  }
+
+</aside>

@@ -1,0 +1,147 @@
+<nav class="sticky top-0 z-30 border-b backdrop-blur-xl saturate-150"
+     style="background-color: rgb(255 255 255 / 0.78); border-color: rgb(226 232 240 / 0.6);">
+  <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center h-16 gap-2 lg:gap-4">
+
+      <!-- ─── Mobile hamburger (visible <lg only) ─────────────────── -->
+      <button (click)="ui.openSidebar()"
+              aria-label="Open menu"
+              class="lg:hidden -ml-1.5 w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition active:scale-95">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+        </svg>
+      </button>
+
+      <!-- ─── Logo ───────────────────────────────────────────────── -->
+      <a [routerLink]="currentUser() ? '/' : '/login'"
+         class="group flex items-center gap-2.5 rounded-xl px-2 py-1.5 -ml-1 transition hover:bg-slate-100/70">
+        <!-- Hex mark only — wordmark sits beside it -->
+        <svg viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg" class="h-8 w-auto transition group-hover:scale-105">
+          <g transform="translate(60, 65)">
+            <polygon points="0,-54 47,-27 47,27 0,54 -47,27 -47,-27" fill="currentColor" opacity="0.10" class="text-brand-600"/>
+            <polygon points="0,-54 47,-27 47,27 0,54 -47,27 -47,-27" fill="none" stroke="currentColor" stroke-width="2.2" class="text-brand-600"/>
+            <rect x="-6" y="-22" width="12" height="44" rx="3" fill="currentColor" class="text-brand-600"/>
+            <rect x="-22" y="-6" width="44" height="12" rx="3" fill="currentColor" class="text-brand-600"/>
+          </g>
+        </svg>
+        <div class="hidden sm:flex flex-col leading-tight">
+          <span class="text-base font-bold text-slate-900 tracking-tight">
+            Medi<span class="font-medium text-slate-500">Core</span>
+          </span>
+          <span class="text-[10px] font-medium uppercase tracking-[0.18em] text-slate-400">Healthcare Platform</span>
+        </div>
+      </a>
+
+      <!-- Vertical divider between brand and nav -->
+      @if (currentUser()) {
+        <div class="hidden lg:block h-7 w-px bg-slate-200"></div>
+      }
+
+      <!-- ─── Desktop nav links (visible lg+ only) ────────────────── -->
+      @if (currentUser()) {
+        <div class="hidden lg:flex items-center gap-0.5 flex-1">
+          @for (item of visibleNavItems(); track item.route + item.label) {
+            <a [routerLink]="item.route"
+               [queryParams]="item.queryParams ?? {}"
+               routerLinkActive="nav-link-active"
+               [routerLinkActiveOptions]="{ exact: !!item.exact, queryParams: 'exact' }"
+               class="nav-link group relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                      text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+              <svg class="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.svgPath"/>
+              </svg>
+              <span class="truncate">{{ item.label }}</span>
+              @if (item.badge) {
+                <span class="flex items-center justify-center min-w-[18px] h-[18px] px-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">{{ item.badge }}</span>
+              }
+              <!-- Active indicator bar -->
+              <span class="nav-link-indicator pointer-events-none absolute left-1/2 -translate-x-1/2 -bottom-[9px] h-0.5 w-8 rounded-full bg-brand-600 opacity-0 transition-opacity"></span>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="flex-1"></div>
+      }
+
+      <!-- ─── Right side: user menu (lg+) ─────────────────────────── -->
+      @if (currentUser()) {
+        <div class="relative ml-auto flex items-center">
+          <!-- Desktop trigger -->
+          <button (click)="toggleUserMenu()"
+                  [attr.aria-expanded]="showUserMenu()"
+                  aria-label="User menu"
+                  class="hidden lg:flex items-center gap-2.5 rounded-xl pl-1 pr-2.5 py-1 transition-all
+                         hover:bg-slate-100 ring-1 ring-transparent hover:ring-slate-200"
+                  [class.bg-slate-100]="showUserMenu()"
+                  [class.ring-slate-200]="showUserMenu()">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-brand-500 to-brand-700 ring-2 ring-white shadow-sm">
+              <span class="text-xs font-bold text-white">{{ userInitials() }}</span>
+            </div>
+            <div class="text-left min-w-0 max-w-[160px]">
+              <p class="text-sm font-semibold truncate text-slate-900 leading-tight">{{ currentUser()!.userName }}</p>
+              <p class="text-[11px] truncate text-slate-500 leading-tight mt-0.5">{{ currentUser()!.role }}</p>
+            </div>
+            <svg class="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200"
+                 [class.rotate-180]="showUserMenu()"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          <!-- Mobile avatar (compact, no dropdown — menu lives in the sidebar drawer) -->
+          <div class="lg:hidden w-9 h-9 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700 ring-2 ring-white shadow-sm">
+            <span class="text-xs font-bold text-white">{{ userInitials() }}</span>
+          </div>
+
+          <!-- ─── User dropdown ─────────────────────────────────── -->
+          @if (showUserMenu()) {
+            <div class="absolute right-0 top-full mt-2 w-72 rounded-2xl border overflow-hidden shadow-xl ring-1 ring-slate-900/5 z-50
+                        bg-white border-slate-200/60 origin-top-right">
+
+              <!-- Account header -->
+              <div class="flex items-center gap-3 px-4 py-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-100">
+                <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-brand-500 to-brand-700 ring-2 ring-white shadow-sm">
+                  <span class="text-sm font-bold text-white">{{ userInitials() }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-semibold text-slate-900 truncate">{{ currentUser()!.userName }}</p>
+                  <p class="text-xs text-slate-500 truncate">{{ currentUser()!.email }}</p>
+                  <span class="inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-brand-50 text-brand-700 border border-brand-100">{{ currentUser()!.role }}</span>
+                </div>
+              </div>
+
+              <!-- Menu items -->
+              <div class="py-1.5">
+                <a routerLink="/profile" (click)="closeUserMenu()"
+                   class="flex items-center gap-3 mx-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                          text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                  <span class="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 text-slate-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                    </svg>
+                  </span>
+                  View Profile
+                </a>
+              </div>
+
+              <div class="border-t border-slate-100 py-1.5">
+                <button (click)="logout()"
+                        class="w-full flex items-center gap-3 mx-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                               text-rose-600 hover:bg-rose-50"
+                        style="width: calc(100% - 0.75rem);">
+                  <span class="w-8 h-8 rounded-lg flex items-center justify-center bg-rose-50 text-rose-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
+                    </svg>
+                  </span>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  </div>
+</nav>

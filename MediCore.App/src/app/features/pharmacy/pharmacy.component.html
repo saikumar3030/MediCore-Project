@@ -1,0 +1,595 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Pharmacy</h1>
+      <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Medicine inventory and dispensing</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @if (isPharmacist()) {
+        <button (click)="toggleDispenseForm()"
+                [class]="showDispenseForm()
+                  ? 'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition shrink-0'
+                  : 'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition shrink-0'">
+          @if (showDispenseForm()) {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Cancel
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Dispense
+          }
+        </button>
+      }
+      @if (!isPharmacist()) {
+        <button (click)="showLookupForm.set(!showLookupForm())"
+                [class]="showLookupForm()
+                  ? 'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition shrink-0'
+                  : 'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition shrink-0'">
+          @if (showLookupForm()) {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Close lookup
+          } @else {
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Lookup by Prescription
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ══ Stat cards ════════════════════════════════════════════════════════ -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+    <div class="rounded-xl p-4 border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Total Medicines</p>
+      <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ totalMedicines() }}</p>
+      <p class="text-[10px] text-slate-500 mt-0.5">{{ activeMedicines() }} active</p>
+    </div>
+    <div class="rounded-xl p-4 border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Low Stock</p>
+      <p class="text-2xl font-bold" [class.text-yellow-400]="lowStockMedicines() > 0" [class.text-slate-900]="lowStockMedicines() === 0" [class.dark:text-white]="lowStockMedicines() === 0">
+        {{ lowStockMedicines() }}
+      </p>
+      <p class="text-[10px] text-slate-500 mt-0.5">less than 10 units</p>
+    </div>
+    <div class="rounded-xl p-4 border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Out of Stock</p>
+      <p class="text-2xl font-bold" [class.text-red-400]="outOfStockMedicines() > 0" [class.text-slate-900]="outOfStockMedicines() === 0" [class.dark:text-white]="outOfStockMedicines() === 0">
+        {{ outOfStockMedicines() }}
+      </p>
+      <p class="text-[10px] text-slate-500 mt-0.5">need restock</p>
+    </div>
+    <div class="rounded-xl p-4 border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Expired</p>
+      <p class="text-2xl font-bold" [class.text-orange-400]="expiredMedicines() > 0" [class.text-slate-900]="expiredMedicines() === 0" [class.dark:text-white]="expiredMedicines() === 0">
+        {{ expiredMedicines() }}
+      </p>
+      <p class="text-[10px] text-slate-500 mt-0.5">past expiry</p>
+    </div>
+    <div class="rounded-xl p-4 border border-slate-200 dark:border-slate-800/70 bg-white dark:bg-slate-900">
+      <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Dispenses</p>
+      <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ totalDispenses() }}</p>
+      <p class="text-[10px] text-slate-500 mt-0.5">all-time</p>
+    </div>
+  </div>
+
+  <!-- ══ Add Medicine Form (Doctor) ════════════════════════════════════════ -->
+  @if (showMedForm()) {
+    <div class="rounded-2xl border border-brand-300 dark:border-brand-500/30 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-5">Add New Medicine</h2>
+      <form [formGroup]="addMedicineForm" (ngSubmit)="createMedicine()" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Medicine Name</label>
+          <input formControlName="name" type="text" placeholder="e.g. Amoxicillin"
+                 class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                        text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Type</label>
+          <select formControlName="type"
+                  class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                         text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition">
+            @for (t of medicineTypeOptions; track t.value) {
+              <option [ngValue]="t.value" class="bg-white text-slate-900">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Initial Stock</label>
+          <input formControlName="stock" type="number" min="0"
+                 class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                        text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Expiry Date</label>
+          <input formControlName="expiryDate" type="date"
+                 class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                        text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+        </div>
+        <div class="sm:col-span-2">
+          <button type="submit" [disabled]="formLoading()"
+                  class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400 disabled:opacity-50
+                         text-white font-semibold text-sm transition">
+            {{ formLoading() ? 'Adding…' : 'Add Medicine' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ══ Dispense Form (Pharmacist) ════════════════════════════════════════ -->
+  @if (showDispenseForm()) {
+    <div class="rounded-2xl border border-emerald-500/30 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-1">Dispense Medicine</h2>
+      <p class="text-xs text-slate-500 mb-5">Pick a patient with an outstanding prescription, then dispense from inventory.</p>
+
+      @if (issuedLoading()) {
+        <p class="text-xs text-slate-500">Loading prescriptions…</p>
+      } @else if (issuedPatients().length === 0) {
+        <p class="text-xs text-yellow-400">No issued prescriptions awaiting dispensing.</p>
+      } @else {
+        <form [formGroup]="dispenseForm" (ngSubmit)="createDispense()" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Patient</label>
+            <select formControlName="patientID"
+                    (change)="onPatientChange($any($event.target).value)"
+                    class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                           text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition">
+              <option value="" class="bg-white text-slate-900">Select patient…</option>
+              @for (p of issuedPatients(); track p.patientID) {
+                <option [value]="p.patientID" class="bg-white text-slate-900">{{ p.patientName }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Prescription</label>
+            <select formControlName="prescriptionID"
+                    (change)="onPrescriptionChange($any($event.target).value)"
+                    [disabled]="!selectedPatientID()"
+                    class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                           text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition disabled:opacity-50">
+              <option value="" class="bg-white text-slate-900">{{ selectedPatientID() ? 'Select prescription…' : 'Pick a patient first' }}</option>
+              @for (p of prescriptionsForSelectedPatient(); track p.prescriptionID) {
+                <option [value]="p.prescriptionID" class="bg-white text-slate-900">
+                  {{ p.medicine }} — {{ p.dosage }} ({{ p.frequency }}, {{ p.duration }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Medicine (from inventory)</label>
+            <select formControlName="medicineID"
+                    class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                           text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition">
+              <option value="" class="bg-white text-slate-900">Select medicine…</option>
+              @for (m of dispensableMedicines(); track m.medicineID) {
+                <option [value]="m.medicineID" class="bg-white text-slate-900">
+                  {{ m.name }} ({{ m.type }}) — {{ m.stock }} in stock
+                </option>
+              }
+            </select>
+            @if (dispensableMedicines().length === 0) {
+              <p class="text-[10px] text-yellow-400 mt-1">No medicines available — check stock and status.</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">Quantity</label>
+            <input formControlName="quantity" type="number" min="1"
+                   class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                          text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition"/>
+          </div>
+
+          <div class="sm:col-span-2">
+            <button type="submit" [disabled]="formLoading() || dispenseForm.invalid"
+                    class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50
+                           text-white font-semibold text-sm transition">
+              {{ formLoading() ? 'Processing…' : 'Dispense' }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  }
+
+  <!-- ══ Prescription Lookup ═══════════════════════════════════════════════ -->
+  @if (showLookupForm() && !isPharmacist()) {
+    <div class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+      <h2 class="text-base font-semibold text-slate-900 dark:text-white mb-3">Lookup Dispense by Prescription</h2>
+      <p class="text-xs text-slate-500 mb-4">Check whether a prescription has already been dispensed.</p>
+      <form [formGroup]="lookupForm" (ngSubmit)="lookupDispense()" class="flex flex-col sm:flex-row gap-2">
+        <input formControlName="prescriptionID" type="text" placeholder="Enter prescription ID…"
+               class="flex-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                      text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+        <button type="submit" [disabled]="lookupLoading() || lookupForm.invalid"
+                class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400 disabled:opacity-50
+                       text-white font-semibold text-sm transition">
+          {{ lookupLoading() ? 'Searching…' : 'Lookup' }}
+        </button>
+      </form>
+
+      @if (lookupError()) {
+        <div class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          {{ lookupError() }}
+        </div>
+      }
+
+      @if (lookupResult(); as d) {
+        <div class="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Medicine</p>
+            <p class="text-slate-900 dark:text-slate-100 font-semibold">{{ d.medicineName }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Quantity</p>
+            <p class="text-slate-900 dark:text-slate-100 font-semibold">{{ d.quantity }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Status</p>
+            <span [class]="'text-xs px-2.5 py-0.5 rounded-full ring-1 ' + getDispenseStatusClass(d.status)">{{ d.status }}</span>
+          </div>
+          <div class="sm:col-span-2">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Pharmacist</p>
+            <p class="text-slate-700 dark:text-slate-300 text-xs font-mono truncate">{{ d.pharmacistID }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">Date</p>
+            <p class="text-slate-700 dark:text-slate-300">{{ d.date | date:'medium' }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══ Tabs ══════════════════════════════════════════════════════════════ -->
+  <div class="flex gap-1 bg-slate-800/50 rounded-xl p-1 w-fit border border-slate-300 dark:border-slate-700/50">
+    <button (click)="switchTab('medicines')"
+            [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+                     (activeTab() === 'medicines' ? 'bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200')">
+      Medicines
+    </button>
+    @if (canSeeDispenses()) {
+      <button (click)="switchTab('dispenses')"
+              [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
+                       (activeTab() === 'dispenses' ? 'bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-slate-200')">
+        Dispense Log
+      </button>
+    }
+  </div>
+
+  <!-- ══ Medicines Tab ═════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'medicines') {
+
+    <!-- Search + filter -->
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input type="text" placeholder="Search medicines by name or type…"
+             [value]="medicineSearch()" (input)="medicineSearch.set($any($event.target).value)"
+             class="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                    text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+      <div class="flex flex-wrap gap-1">
+        @for (f of ['All', 'Active', 'Inactive', 'OutOfStock', 'Expired']; track f) {
+          <button (click)="medicineStatusFilter.set($any(f))"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                  [class]="medicineStatusFilter() === f
+                    ? (f === 'Active'     ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40'
+                     : f === 'Inactive'   ? 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-500/40'
+                     : f === 'OutOfStock' ? 'bg-red-500/20 text-red-300 ring-1 ring-red-500/40'
+                     : f === 'Expired'    ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/40'
+                     :                      'bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-500/40')
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-white/[0.06]'">
+            {{ f }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800/70 overflow-hidden">
+      <div class="px-5 py-4 bg-slate-800/30 border-b border-slate-200 dark:border-slate-800/70">
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+          Medicine Inventory <span class="text-slate-500 font-normal">({{ filteredMedicines().length }})</span>
+        </h2>
+      </div>
+
+      @if (loading()) {
+        <div class="flex items-center justify-center py-16">
+          <svg class="w-7 h-7 text-brand-600 dark:text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+      } @else if (filteredMedicines().length === 0) {
+        <div class="flex items-center justify-center py-16 text-slate-500 text-sm">
+          {{ medicineSearch() || medicineStatusFilter() !== 'All' ? 'No matches.' : 'No medicines yet.' }}
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
+                <th class="px-5 py-3 text-left font-medium">Name</th>
+                <th class="px-5 py-3 text-left font-medium">Type</th>
+                <th class="px-5 py-3 text-left font-medium">Stock</th>
+                <th class="px-5 py-3 text-left font-medium">Expiry</th>
+                <th class="px-5 py-3 text-left font-medium">Status</th>
+                @if (isPharmacist() || isAdmin()) {
+                  <th class="px-5 py-3 text-right font-medium">Actions</th>
+                }
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/50">
+              @for (med of filteredMedicines(); track med.medicineID) {
+                <tr class="bg-white dark:bg-slate-900/40 hover:bg-slate-800/30 transition-colors">
+                  <td class="px-5 py-3">
+                    <p class="font-medium text-slate-900 dark:text-slate-100">{{ med.name }}</p>
+                    <p class="text-[10px] font-mono text-slate-500 truncate max-w-[14rem]">{{ med.medicineID }}</p>
+                  </td>
+                  <td class="px-5 py-3 text-slate-600 dark:text-slate-400">{{ med.type }}</td>
+                  <td class="px-5 py-3">
+                    <span [class]="'text-xs px-2.5 py-0.5 rounded-full font-medium ' + getStockBadgeClass(med)">
+                      {{ med.stock }} units
+                    </span>
+                  </td>
+                  <td class="px-5 py-3">
+                    <p class="text-slate-700 dark:text-slate-300">{{ med.expiryDate }}</p>
+                    @if (isExpired(med.expiryDate)) {
+                      <p class="text-[10px] text-orange-400">expired</p>
+                    } @else if (daysUntilExpiry(med.expiryDate); as d) {
+                      @if (d <= 30) {
+                        <p class="text-[10px] text-yellow-400">{{ d }} day(s) left</p>
+                      }
+                    }
+                  </td>
+                  <td class="px-5 py-3">
+                    <span [class]="'text-xs px-2.5 py-0.5 rounded-full ring-1 ' + getMedicineStatusClass(effectiveStatus(med))">
+                      {{ effectiveStatus(med) }}
+                    </span>
+                    @if (isExpired(med.expiryDate) && med.status !== 'Expired') {
+                      <span class="ml-1 text-[10px] text-orange-400">(expired)</span>
+                    }
+                  </td>
+                  @if (isPharmacist() || isAdmin()) {
+                    <td class="px-5 py-3 text-right">
+                      <!-- Stock add (Pharmacist) -->
+                      @if (showStockForm() === med.medicineID) {
+                        <form [formGroup]="stockForm" (ngSubmit)="saveStock(med.medicineID)"
+                              class="inline-flex items-center justify-end gap-2">
+                          <input formControlName="quantity" type="number" min="1" placeholder="+ qty"
+                                 class="w-24 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                                        text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"/>
+                          <button type="submit" [disabled]="formLoading() || stockForm.invalid"
+                                  class="text-xs text-emerald-400 hover:text-emerald-300 font-medium disabled:opacity-50">Add</button>
+                          <button type="button" (click)="showStockForm.set(null)"
+                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Cancel
+                          </button>
+                        </form>
+                      }
+                      <!-- Status change (Admin) -->
+                      @else if (showStatusForm() === med.medicineID) {
+                        <form [formGroup]="statusForm" (ngSubmit)="saveStatus(med.medicineID)"
+                              class="inline-flex items-center justify-end gap-2">
+                          <select formControlName="status"
+                                  class="px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                                         text-slate-900 dark:text-slate-100 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500">
+                            @for (s of medicineStatusOptions; track s.value) {
+                              <option [ngValue]="s.value" class="bg-white text-slate-900">{{ s.label }}</option>
+                            }
+                          </select>
+                          <button type="submit" [disabled]="formLoading()"
+                                  class="text-xs text-emerald-400 hover:text-emerald-300 font-medium disabled:opacity-50">Save</button>
+                          <button type="button" (click)="showStatusForm.set(null)"
+                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            Cancel
+                          </button>
+                        </form>
+                      }
+                      @else {
+                        <div class="inline-flex items-center gap-2">
+                          @if (med.status === 'Inactive' && !isExpired(med.expiryDate) && (isPharmacist() || isAdmin())) {
+                            <button type="button" (click)="reactivateMedicine(med)"
+                                    [disabled]="formLoading()"
+                                    title="Reactivate medicine"
+                                    class="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 font-medium disabled:opacity-50">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                              </svg>
+                              Reactivate
+                            </button>
+                          }
+                          @if (isPharmacist()) {
+                            <button type="button" (click)="openStockForm(med)"
+                                    class="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+                              + Stock
+                            </button>
+                            <button type="button" (click)="openRemoveConfirm(med)"
+                                    [title]="med.status === 'Inactive' ? 'Permanently delete from database' : 'Remove from inventory (set Inactive)'"
+                                    class="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300 font-medium">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                              </svg>
+                              {{ med.status === 'Inactive' ? 'Delete' : 'Remove' }}
+                            </button>
+                          }
+                          @if (isAdmin()) {
+                            <button type="button" (click)="openStatusForm(med)"
+                                    class="text-xs text-brand-600 dark:text-brand-400 hover:text-cyan-300 font-medium">
+                              Status
+                            </button>
+                          }
+                        </div>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══ Dispense Log Tab ══════════════════════════════════════════════════ -->
+  @if (activeTab() === 'dispenses') {
+
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input type="text" placeholder="Search by prescription, medicine or pharmacist…"
+             [value]="dispenseSearch()" (input)="dispenseSearch.set($any($event.target).value)"
+             class="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700/50
+                    text-slate-900 dark:text-slate-100 text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition"/>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800/70 overflow-hidden">
+      <div class="px-5 py-4 bg-slate-800/30 border-b border-slate-200 dark:border-slate-800/70">
+        <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+          Dispense Log <span class="text-slate-500 font-normal">({{ filteredDispenses().length }})</span>
+        </h2>
+      </div>
+
+      @if (dispensesLoading()) {
+        <div class="flex items-center justify-center py-16">
+          <svg class="w-7 h-7 text-brand-600 dark:text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+        </div>
+      } @else if (filteredDispenses().length === 0) {
+        <div class="flex items-center justify-center py-16 text-slate-500 text-sm">
+          {{ dispenseSearch() ? 'No matches.' : 'No dispense records yet.' }}
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-800/50 text-slate-600 dark:text-slate-400 text-xs uppercase tracking-wider">
+                <th class="px-5 py-3 text-left font-medium">Medicine</th>
+                <th class="px-5 py-3 text-left font-medium">Prescription ID</th>
+                <th class="px-5 py-3 text-left font-medium">Qty</th>
+                <th class="px-5 py-3 text-left font-medium">Pharmacist</th>
+                <th class="px-5 py-3 text-left font-medium">Status</th>
+                <th class="px-5 py-3 text-left font-medium">Date</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/50">
+              @for (d of filteredDispenses(); track d.dispenseID) {
+                <tr class="bg-white dark:bg-slate-900/40 hover:bg-slate-800/30 transition-colors">
+                  <td class="px-5 py-3">
+                    <p class="font-medium text-slate-900 dark:text-slate-100">{{ d.medicineName }}</p>
+                    <p class="text-[10px] font-mono text-slate-500 truncate max-w-[12rem]">{{ d.medicineID }}</p>
+                  </td>
+                  <td class="px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-400 truncate max-w-[14rem]">{{ d.prescriptionID }}</td>
+                  <td class="px-5 py-3 text-slate-900 dark:text-slate-100 font-semibold">{{ d.quantity }}</td>
+                  <td class="px-5 py-3 font-mono text-xs text-slate-600 dark:text-slate-400 truncate max-w-[10rem]">{{ d.pharmacistID }}</td>
+                  <td class="px-5 py-3">
+                    <span [class]="'text-xs px-2.5 py-0.5 rounded-full ring-1 ' + getDispenseStatusClass(d.status)">
+                      {{ d.status }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-600 dark:text-slate-400">{{ d.date | date:'short' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Toast -->
+@if (success()) {
+  <div (click)="dismissToast()"
+       class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl cursor-pointer
+              border border-emerald-200 bg-emerald-50 text-sm font-medium text-emerald-800">
+    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    {{ success() }}
+  </div>
+}
+@if (error()) {
+  <div (click)="dismissToast()"
+       class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl cursor-pointer
+              border border-rose-200 bg-rose-50 text-sm font-medium text-rose-700">
+    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+    </svg>
+    {{ error() }}
+  </div>
+}
+
+<!-- ══ Remove-medicine confirmation modal ════════════════════════════════════ -->
+@if (removeTarget(); as med) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" (click)="closeRemoveConfirm()"></div>
+
+    <div class="relative z-10 w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/70
+                shadow-2xl p-6 text-center">
+      <div class="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+        </svg>
+      </div>
+
+      <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+        {{ isHardDeleteTarget() ? 'Permanently Delete Medicine' : 'Remove Medicine' }}
+      </h2>
+      @if (isHardDeleteTarget()) {
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+          Permanently delete <span class="text-slate-900 dark:text-white font-medium">{{ med.name }}</span>?
+          This removes the row from the database and <span class="font-medium text-red-400">cannot be undone</span>.
+          The action is rejected if any dispense records reference this medicine.
+        </p>
+      } @else {
+        <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+          Remove <span class="text-slate-900 dark:text-white font-medium">{{ med.name }}</span> from active inventory?
+          It will be marked <span class="font-medium text-slate-700 dark:text-slate-200">Inactive</span> and stop appearing in dispensable lists.
+          Past dispense records are preserved.
+        </p>
+      }
+
+      <div class="flex gap-3">
+        <button type="button" (click)="closeRemoveConfirm()" [disabled]="removeLoading()"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-50
+                       text-white text-sm font-medium transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Cancel
+        </button>
+        <button type="button" (click)="confirmRemoveMedicine()" [disabled]="removeLoading()"
+                [class]="'flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl disabled:opacity-50 text-white text-sm font-semibold transition ' +
+                         (isHardDeleteTarget() ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-700 hover:bg-slate-600')">
+          @if (removeLoading()) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            {{ isHardDeleteTarget() ? 'Deleting…' : 'Removing…' }}
+          } @else {
+            {{ isHardDeleteTarget() ? 'Delete Permanently' : 'Remove' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
